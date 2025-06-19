@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import com.example.meerkatservice.ui.screens.LoadingScreen
 import com.example.meerkatservice.ui.screens.MainScreen
+import com.example.meerkatservice.ui.screens.TabScreen
 import com.example.meerkatservice.ui.theme.MeerkatServiceTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.slf4j.Logger
@@ -63,7 +64,7 @@ class MainActivity : ComponentActivity() {
             MeerkatServiceTheme {
                 val isBoundService by isBound.collectAsState()
                 if (isBoundService) {
-                    MainScreen()
+                    TabScreen()
                 } else {
                     LoadingScreen()
                 }
