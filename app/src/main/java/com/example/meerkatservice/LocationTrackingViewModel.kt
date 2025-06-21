@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
-import androidx.activity.result.launch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,27 +16,31 @@ class LocationTrackingViewModel : ViewModel() {
     private val _isServiceBound = MutableStateFlow(false)
     val isServiceBound: StateFlow<Boolean> = _isServiceBound.asStateFlow()
 
-    private var myService: LocationTrackingService? = null
-    val serviceCounter: StateFlow<Int?> = myService?.currentCounter ?: MutableStateFlow(null)
+    private var binder: LocationTrackingService.LocalBinder? = null
+    val serviceCounter: MutableStateFlow<Int?> = MutableStateFlow<Int?>(null)
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             logger.trace("onServiceConnected name={} service={}", name, service)
-            val binder = service as LocationTrackingService.LocalBinder
-            myService = binder.getService()
+            binder = service as LocationTrackingService.LocalBinder
             _isServiceBound.value = true
             // サービスからデータを監視する場合はここで開始
             viewModelScope.launch {
-                myService?.currentCounter?.collect { counter ->
-                    // 必要に応じてデータをViewModelの別のStateFlowに更新
-                    logger.debug("Service Data Updated: $counter")
+                runCatching {
+                    binder?.getService()?.currentCounter?.collect { counter ->
+                        // 必要に応じてデータをViewModelの別のStateFlowに更新
+                        logger.debug("Service Data Updated: $counter")
+                        serviceCounter.value = counter
+                    }
+                }.onFailure {
+                    logger.error("collect", it)
                 }
             }
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
             logger.trace("onServiceDisconnected name={}", name)
-            myService = null
+            binder = null
             _isServiceBound.value = false
         }
     }
@@ -55,14 +58,14 @@ class LocationTrackingViewModel : ViewModel() {
         logger.trace("unbindFromService")
         if (_isServiceBound.value) {
             context.unbindService(serviceConnection)
-            myService = null
+            binder = null
             _isServiceBound.value = false
         }
     }
 
     fun callServiceMethod() {
         logger.trace("callServiceMethod")
-//        myService?.doSomethingInService()
+        binder?.getService()?.incrementCounter()
     }
 
     override fun onCleared() {

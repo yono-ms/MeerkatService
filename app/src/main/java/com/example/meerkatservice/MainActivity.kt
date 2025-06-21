@@ -35,26 +35,6 @@ import org.slf4j.LoggerFactory
 
 class MainActivity : ComponentActivity() {
 
-    private var myService: LocationTrackingService? = null
-    private var isBound = MutableStateFlow(false)
-
-    private val connection = object : ServiceConnection {
-        override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            logger.trace("onServiceConnected")
-            val binder = service as LocationTrackingService.LocalBinder
-            myService = binder.getService()
-            isBound.value = true
-            // サービスに接続された後の処理
-            // 例: myService?.doSomething()
-        }
-
-        override fun onServiceDisconnected(arg0: ComponentName) {
-            logger.trace("onServiceDisconnected")
-            isBound.value = false
-            myService = null
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         logger.trace("onCreate {}", savedInstanceState)
@@ -62,12 +42,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MeerkatServiceTheme {
-                val isBoundService by isBound.collectAsState()
-                if (isBoundService) {
-                    TabScreen()
-                } else {
-                    LoadingScreen()
-                }
+                TabScreen()
             }
         }
     }
@@ -75,32 +50,26 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         logger.trace("onStart")
-        // サービスを開始 (まだ開始されていない場合)
-        checkAndStart()
     }
 
-    private fun startLocationDependentFeature(isPrecise: Boolean = true) {
-        Intent(this, LocationTrackingService::class.java).also { intent ->
-            // フォアグラウンドサービスとして開始する必要がある場合
-            startForegroundService(intent)
-            // その後バインド
-            bindService(intent, connection, BIND_AUTO_CREATE)
-        }
+    override fun onResume() {
+        super.onResume()
+        logger.trace("onResume")
     }
 
-    private fun checkAndStart() {
-        logger.trace("checkAndStart")
-        startLocationDependentFeature()
+    override fun onPause() {
+        super.onPause()
+        logger.trace("onPause")
     }
 
     override fun onStop() {
         super.onStop()
         logger.trace("onStop")
-        if (isBound.value) {
-            unbindService(connection)
-            isBound.value = false
-            myService = null // 参照をクリア
-        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        logger.trace("onDestroy")
     }
 
     private fun loggerTest() {

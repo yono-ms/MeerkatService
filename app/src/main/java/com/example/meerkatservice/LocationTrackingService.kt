@@ -72,7 +72,7 @@ class LocationTrackingService : Service() {
         // この例では具体的なタスクがないため、 ServiceInfo.FOREGROUND_SERVICE_TYPE_NONE を使用
         // または、特定のタスクがある場合は適切なタイプ (例: ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC) を指定
         val foregroundServiceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
         } else {
             0 // Q未満ではこの引数は使われない
         }
@@ -141,5 +141,9 @@ class LocationTrackingService : Service() {
             manager.createNotificationChannel(serviceChannel)
             Log.d(TAG, "Notification channel created.")
         }
+    }
+
+    fun incrementCounter() {
+        _currentCounter.value++
     }
 }
