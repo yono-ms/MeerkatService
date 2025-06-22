@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Binder
@@ -18,9 +19,13 @@ import kotlinx.coroutines.flow.StateFlow
 
 class LocationTrackingService : Service() {
 
-    private val TAG = "LocationTrackingService"
-    private val NOTIFICATION_CHANNEL_ID = "LocationTrackingChannel"
-    private val NOTIFICATION_ID = 1
+    companion object {
+        private const val NOTIFICATION_CHANNEL_ID = "LocationTrackingChannelId"
+        private const val NOTIFICATION_CHANNEL_NAME = "LocationTrackingChannelName"
+        private const val NOTIFICATION_ID = 1
+
+        var isRunning = false
+    }
 
     // Binder given to clients
     private val binder = LocalBinder()
@@ -41,17 +46,23 @@ class LocationTrackingService : Service() {
     override fun onCreate() {
         super.onCreate()
         logger.trace("onCreate")
-        createNotificationChannel()
+        isRunning = true
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        logger.trace("onStartCommand")
+
+        val channel = NotificationChannel(
+            NOTIFICATION_CHANNEL_ID,
+            NOTIFICATION_CHANNEL_NAME,
+            NotificationManager.IMPORTANCE_DEFAULT
+        )
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.createNotificationChannel(channel)
+
         // 通知をタップしたときに MainActivity を開くための PendingIntent
         val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntentFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        } else {
-            PendingIntent.FLAG_UPDATE_CURRENT
-        }
+        val pendingIntentFlags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         val pendingIntent = PendingIntent.getActivity(
             this,
             0, // requestCode
@@ -84,9 +95,9 @@ class LocationTrackingService : Service() {
                 notification,
                 foregroundServiceType
             )
-            Log.i(TAG, "Foreground service started successfully.")
+            logger.info("Foreground service started successfully.")
         } catch (e: Exception) {
-            Log.e(TAG, "Error starting foreground service: ${e.message}", e)
+            logger.error("Error starting foreground service: ${e.message}", e)
             // ForegroundServiceStartNotAllowedException (API 31+) や
             // RemoteServiceException (API 30以前の "Bad notification") など
             stopSelf() // エラー時はサービスを停止
@@ -124,26 +135,16 @@ class LocationTrackingService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         logger.trace("onDestroy")
-    }
-
-    private fun createNotificationChannel() {
-        // Android Oreo (API 26) 以降では通知チャンネルの作成が必須
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
-                NOTIFICATION_CHANNEL_ID,
-                "Simple Foreground Service Channel", // ユーザーに見えるチャンネル名
-                NotificationManager.IMPORTANCE_LOW // 通知の重要度 (音やバイブなし、邪魔にならないように)
-            ).apply {
-                description = "Channel for Simple Foreground Service"
-            }
-
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(serviceChannel)
-            Log.d(TAG, "Notification channel created.")
-        }
+        isRunning = false
     }
 
     fun incrementCounter() {
+        logger.trace("incrementCounter")
         _currentCounter.value++
+    }
+
+    fun requestStopService() {
+        logger.trace("requestStopService")
+        stopSelf()
     }
 }

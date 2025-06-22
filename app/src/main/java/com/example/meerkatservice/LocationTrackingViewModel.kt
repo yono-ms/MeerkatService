@@ -49,6 +49,7 @@ class LocationTrackingViewModel : ViewModel() {
         logger.trace("bindToService")
         if (!_isServiceBound.value) {
             Intent(context, LocationTrackingService::class.java).also { intent ->
+                context.startForegroundService(intent)
                 context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
             }
         }
@@ -60,6 +61,13 @@ class LocationTrackingViewModel : ViewModel() {
             context.unbindService(serviceConnection)
             binder = null
             _isServiceBound.value = false
+        }
+    }
+
+    fun stopService(context: Context) {
+        logger.trace("stopService")
+        Intent(context, LocationTrackingService::class.java).also { intent ->
+            context.stopService(intent)
         }
     }
 
