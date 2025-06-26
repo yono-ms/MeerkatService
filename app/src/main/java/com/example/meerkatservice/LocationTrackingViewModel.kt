@@ -25,28 +25,39 @@ class LocationTrackingViewModel : ViewModel() {
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             logger.trace("onServiceConnected name={} service={}", name, service)
-            binder = service as LocationTrackingService.LocalBinder
+            val localBinder = service as LocationTrackingService.LocalBinder
+            binder = localBinder
             _isServiceBound.value = true
             // サービスからデータを監視する場合はここで開始
             viewModelScope.launch {
                 runCatching {
-                    binder?.getService()?.let { service ->
-                        service.currentLocation.collect { location ->
-                            logger.debug("Service Location Data Updated: {}", location)
-                            currentLocation.value = location
-                        }
-                        service.locationError.collect { error ->
-                            logger.debug("Service Location Error Updated: {}", error)
-                            locationError.value = error
-                        }
-                        service.currentCounter.collect { counter ->
-                            // 必要に応じてデータをViewModelの別のStateFlowに更新
-                            logger.debug("Service Data Updated: $counter")
-                            serviceCounter.value = counter
-                        }
+                    localBinder.getService().currentLocation.collect { location ->
+                        logger.debug("Service Location Data Updated: {}", location)
+                        currentLocation.value = location
                     }
                 }.onFailure {
-                    logger.error("collect", it)
+                    logger.error("currentLocation", it)
+                }
+            }
+            viewModelScope.launch {
+                runCatching {
+                    localBinder.getService().locationError.collect { error ->
+                        logger.debug("Service Location Error Updated: {}", error)
+                        locationError.value = error
+                    }
+                }.onFailure {
+                    logger.error("locationError", it)
+                }
+            }
+            viewModelScope.launch {
+                runCatching {
+                    localBinder.getService().currentCounter.collect { counter ->
+                        // 必要に応じてデータをViewModelの別のStateFlowに更新
+                        logger.debug("Service Data Updated: $counter")
+                        serviceCounter.value = counter
+                    }
+                }.onFailure {
+                    logger.error("currentCounter", it)
                 }
             }
         }
