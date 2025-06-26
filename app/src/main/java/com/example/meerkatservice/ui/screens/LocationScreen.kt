@@ -122,6 +122,8 @@ fun LocationContent(viewModel: LocationTrackingViewModel = viewModel(), onStop: 
 
     val isBound by viewModel.isServiceBound.collectAsStateWithLifecycle()
     val counter by viewModel.serviceCounter.collectAsStateWithLifecycle()
+    val currentLocation by viewModel.currentLocation.collectAsStateWithLifecycle()
+    val locationError by viewModel.locationError.collectAsStateWithLifecycle()
 
     DisposableEffect(Unit) {
         viewModel.bindToService(context)
@@ -138,6 +140,18 @@ fun LocationContent(viewModel: LocationTrackingViewModel = viewModel(), onStop: 
         Text(text = "LocationScreen is bound $isBound")
         if (isBound) {
             Text(text = "counter=$counter")
+            currentLocation?.let { location ->
+                Text("Latitude: ${location.latitude}")
+                Text("Longitude: ${location.longitude}")
+                Text("Accuracy: ${location.accuracy}m")
+                Text("Provider: ${location.provider}")
+                Text("Timestamp: ${java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(location.time))}")
+            } ?: run {
+                Text("Acquiring location...")
+            }
+            locationError?.let { error ->
+                Text(text = error)
+            }
             Button(onClick = {
                 viewModel.callServiceMethod()
             }) {

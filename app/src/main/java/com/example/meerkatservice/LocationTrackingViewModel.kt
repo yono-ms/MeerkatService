@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.location.Location
 import android.os.IBinder
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,6 +19,8 @@ class LocationTrackingViewModel : ViewModel() {
 
     private var binder: LocationTrackingService.LocalBinder? = null
     val serviceCounter: MutableStateFlow<Int?> = MutableStateFlow<Int?>(null)
+    val currentLocation: MutableStateFlow<Location?> = MutableStateFlow<Location?>(null)
+    val locationError: MutableStateFlow<String?> = MutableStateFlow<String?>(null)
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -27,10 +30,20 @@ class LocationTrackingViewModel : ViewModel() {
             // サービスからデータを監視する場合はここで開始
             viewModelScope.launch {
                 runCatching {
-                    binder?.getService()?.currentCounter?.collect { counter ->
-                        // 必要に応じてデータをViewModelの別のStateFlowに更新
-                        logger.debug("Service Data Updated: $counter")
-                        serviceCounter.value = counter
+                    binder?.getService()?.let { service ->
+                        service.currentLocation.collect { location ->
+                            logger.debug("Service Location Data Updated: {}", location)
+                            currentLocation.value = location
+                        }
+                        service.locationError.collect { error ->
+                            logger.debug("Service Location Error Updated: {}", error)
+                            locationError.value = error
+                        }
+                        service.currentCounter.collect { counter ->
+                            // 必要に応じてデータをViewModelの別のStateFlowに更新
+                            logger.debug("Service Data Updated: $counter")
+                            serviceCounter.value = counter
+                        }
                     }
                 }.onFailure {
                     logger.error("collect", it)
@@ -80,6 +93,7 @@ class LocationTrackingViewModel : ViewModel() {
         // ViewModelが破棄されるときにアンバインドすることが重要
         // ただし、Activity/Fragmentのライフサイクルで管理する方が安全な場合もある
         // context.unbindService(serviceConnection) // ここで context を安全に取得する方法に注意
+        logger.trace("onCleared")
         super.onCleared()
     }
 }
