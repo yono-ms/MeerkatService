@@ -1,7 +1,12 @@
 package com.example.meerkatservice.ui.screens
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -27,12 +33,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.meerkatservice.LocationTrackingService
 import com.example.meerkatservice.LocationTrackingViewModel
 import com.example.meerkatservice.logger
+import com.example.meerkatservice.ui.dialogs.RationalDialog
 import com.example.meerkatservice.ui.theme.MeerkatServiceTheme
 
 @Composable
@@ -61,6 +69,8 @@ fun LocationScreen() {
 
     var permissionsGrantedState by remember { mutableStateOf(initialPermissionsState) }
 
+    val shouldShowRationalState = remember { mutableStateMapOf<String, Boolean>() }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
@@ -68,17 +78,27 @@ fun LocationScreen() {
         result.forEach { (permission, isGranted) ->
             logger.debug("$permission $isGranted")
             updatedPermissionsStatus[permission] = isGranted
+            if (!isGranted) {
+                val activity = context as Activity
+                shouldShowRationalState[permission] = ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
+                logger.info("shouldShowRationalState $permission $shouldShowRationalState")
+            } else {
+                shouldShowRationalState[permission] = false
+            }
         }
         permissionsGrantedState = updatedPermissionsStatus
     }
 
     val allPermissionsGranted = permissionsGrantedState.all { it.value }
+    val anyShouldShowRational = shouldShowRationalState.any { it.value }
 
     var serviceIsAlive by rememberSaveable { mutableStateOf(LocationTrackingService.isRunning) }
 
     Column {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -110,8 +130,27 @@ fun LocationScreen() {
                 }) {
                     Text(text = "Get Permission")
                 }
+                Button(onClick = {
+                    openAppSettings(context)
+                }) {
+                    Text(text = "Application Setting")
+                }
             }
         }
+    }
+    if (anyShouldShowRational) {
+        RationalDialog {
+            shouldShowRationalState.clear()
+        }
+    }
+}
+
+fun openAppSettings(context: Context) {
+    Intent(
+        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Uri.fromParts("package", context.packageName, null)
+    ).also { intent ->
+        context.startActivity(intent)
     }
 }
 
