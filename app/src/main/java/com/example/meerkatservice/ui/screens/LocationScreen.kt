@@ -39,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.meerkatservice.LocationTrackingService
 import com.example.meerkatservice.LocationTrackingViewModel
+import com.example.meerkatservice.extensions.toBestString
 import com.example.meerkatservice.logger
 import com.example.meerkatservice.ui.dialogs.RationalDialog
 import com.example.meerkatservice.ui.theme.MeerkatServiceTheme
@@ -184,7 +185,7 @@ fun LocationContent(viewModel: LocationTrackingViewModel = viewModel(), onStop: 
                 Text("Longitude: ${location.longitude}")
                 Text("Accuracy: ${location.accuracy}m")
                 Text("Provider: ${location.provider}")
-                Text("Timestamp: ${java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(location.time))}")
+                Text("Timestamp: ${java.util.Date(location.time).toBestString()}")
             } ?: run {
                 Text("Acquiring location...")
             }
