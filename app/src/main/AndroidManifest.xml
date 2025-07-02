@@ -12,6 +12,7 @@
          (この例では特定のタイプを指定しないので、コメントアウトまたは削除しても良いが、
           将来的に拡張する場合は適切なタイプと権限を追加する) -->
      <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -44,6 +45,11 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="location"/>
+        <service
+            android:name=".CounterService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
     </application>
 
 </manifest>

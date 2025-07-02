@@ -1,6 +1,5 @@
 package com.example.meerkatservice.ui.screens
 
-import android.media.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -8,8 +7,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,7 +23,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -42,9 +43,10 @@ data class NavItem(
 fun TabScreen() {
     val navItems = listOf(
         NavItem("Home", Icons.Filled.Home, Icons.Outlined.Home, "home"),
-        NavItem("Location", Icons.Filled.LocationOn, Icons.Outlined.LocationOn, "location")
+        NavItem("Location", Icons.Filled.LocationOn, Icons.Outlined.LocationOn, "location"),
+        NavItem("Counter", Icons.Filled.ThumbUp, Icons.Outlined.ThumbUp, "counter")
     )
-    var selectedItemIndex by remember { mutableStateOf(0) }
+    var selectedItemIndex by remember { mutableIntStateOf(0) }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -90,6 +92,10 @@ fun TabScreen() {
 
                 "location" -> {
                     LocationScreen()
+                }
+
+                "counter" -> {
+                    CounterScreen()
                 }
 
                 else -> {
