@@ -22,13 +22,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.meerkatservice.extensions.oldLocationScreenFlow
 import com.example.meerkatservice.ui.theme.MeerkatServiceTheme
 
 data class NavItem(
@@ -41,6 +44,9 @@ data class NavItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TabScreen() {
+    val context = LocalContext.current
+    val oldLocationScreen by context.oldLocationScreenFlow.collectAsState(false)
+
     val navItems = listOf(
         NavItem("Home", Icons.Filled.Home, Icons.Outlined.Home, "home"),
         NavItem("Location", Icons.Filled.LocationOn, Icons.Outlined.LocationOn, "location"),
@@ -91,7 +97,11 @@ fun TabScreen() {
                 }
 
                 "location" -> {
-                    LocationScreen()
+                    if (oldLocationScreen) {
+                        LocationScreen()
+                    } else {
+                        DistanceScreen()
+                    }
                 }
 
                 "counter" -> {
