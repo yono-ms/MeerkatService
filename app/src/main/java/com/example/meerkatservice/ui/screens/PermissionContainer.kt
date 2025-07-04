@@ -5,11 +5,13 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -126,11 +128,7 @@ fun PermissionContainer(
         // 8a. Access the Info
         content()
     } else {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
+        Column {
             // 5a. Show a rationale to the user?
             if (anyShouldShowRational) {
                 // 5b. Explain to the user why your app needs this permission
@@ -141,34 +139,51 @@ fun PermissionContainer(
                         permissionLauncher.launch(permissionsToRequest)
                     }
                 } ?: run {
-                    Text("The following permissions are required")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    shouldShowRationalState.forEach {
-                        Text(it.key)
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = {
-                        // 6. Request the permission to show the system dialog
-                        permissionLauncher.launch(permissionsToRequest)
-                    }) {
-                        Text("Get Permissions")
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text("The following permissions are required")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        shouldShowRationalState.forEach {
+                            Text(it.key)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = {
+                            // 6. Request the permission to show the system dialog
+                            permissionLauncher.launch(permissionsToRequest)
+                        }) {
+                            Text("Get Permissions")
+                        }
                     }
                 }
             } else {
                 if (progress) {
                     // 3. Wait for user to request specific action
-                    Text("Checking Permissions")
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 } else {
                     // 8b. Gracefully degrade your app's experience
                     degrade?.let { degradeContent ->
                         degradeContent()
                     } ?: run {
-                        Text("Location Screen needs Permissions")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = {
-                            context.openAppSettings()
-                        }) {
-                            Text("Goto App Settings")
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text("This Screen needs Permissions")
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(onClick = {
+                                context.openAppSettings()
+                            }) {
+                                Text("Goto App Settings")
+                            }
                         }
                     }
                 }
