@@ -50,6 +50,11 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+        <service
+            android:name=".DistanceService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location"/>
     </application>
 
 </manifest>
