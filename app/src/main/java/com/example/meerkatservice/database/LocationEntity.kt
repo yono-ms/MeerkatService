@@ -80,9 +80,13 @@ data class LocationEntity(
      */
     @ColumnInfo(name = "has_altitude")
     val hasAltitude: Boolean,
+    /**
+     * 直前のエントリーとの距離
+     */
+    val distance: Float,
 ) {
     companion object {
-        fun fromLocation(location: Location): LocationEntity {
+        fun fromLocation(location: Location, distance: Float): LocationEntity {
             return LocationEntity(
                 locationId = 0,
                 latitude = location.latitude,
@@ -99,15 +103,21 @@ data class LocationEntity(
                 provider = location.provider.toString(),
                 hasAccuracy = location.hasAccuracy(),
                 hasSpeed = location.hasSpeed(),
-                hasAltitude = location.hasAltitude()
+                hasAltitude = location.hasAltitude(),
+                distance = distance,
             )
         }
 
         fun fromLocations(locations: List<Location>): List<LocationEntity> {
             val list = mutableListOf<LocationEntity>()
-            locations.forEach {
-                val entity = fromLocation(it)
+            var prev: Location? = null
+            locations.forEach { location ->
+                val distance = prev?.let {
+                    location.distanceTo(it)
+                } ?: 0F
+                val entity = fromLocation(location, distance)
                 list.add(entity)
+                prev = location
             }
             return list
         }

@@ -164,7 +164,6 @@ class DistanceService : Service() {
                         _locationError.value = it.localizedMessage
                     }
                 }
-                super.onLocationResult(locationResult)
             }
 
             override fun onLocationAvailability(locationAvailability: LocationAvailability) {

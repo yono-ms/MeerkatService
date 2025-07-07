@@ -110,6 +110,7 @@ fun LocationEntityContent(entity: LocationEntity) {
         Text("Longitude: ${entity.longitude}")
         Text("Accuracy: ${entity.accuracy}m")
         Text("Provider: ${entity.provider}")
+        Text("Distance: ${"%.2f".format(entity.distance)}m")
         Text("Timestamp: ${Date(entity.time).toBestString()}")
     }
 }
@@ -186,7 +187,8 @@ fun LocationEntityContentPreview() {
                 provider = "provider1",
                 hasAccuracy = true,
                 hasSpeed = true,
-                hasAltitude = true
+                hasAltitude = true,
+                distance = 1.1F
             )
         )
     }
