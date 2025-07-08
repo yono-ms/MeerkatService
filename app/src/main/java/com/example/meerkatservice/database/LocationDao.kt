@@ -16,4 +16,7 @@ interface LocationDao {
 
     @Query("SELECT * FROM location_entity ORDER BY time")
     fun getAllFlow(): Flow<List<LocationEntity>>
+
+    @Query("SELECT COUNT(*) FROM location_entity")
+    fun getCount(): Flow<Int>
 }

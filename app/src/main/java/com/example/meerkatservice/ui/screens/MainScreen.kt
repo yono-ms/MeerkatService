@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.meerkatservice.database.MyDatabase
 import com.example.meerkatservice.extensions.oldLocationScreenFlow
 import com.example.meerkatservice.extensions.saveOldLocationScreen
 import com.example.meerkatservice.logger
@@ -35,6 +36,8 @@ fun MainScreen(onButtonClicked: () -> Unit = {}) { // ボタンクリック時�
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val oldLocationScreen by context.oldLocationScreenFlow.collectAsState(false)
+    val dao = MyDatabase.getDatabase(context).locationDao()
+    val count by dao.getCount().collectAsState(0)
     Column(
         modifier = Modifier
             .fillMaxSize() // 画面全体に表示
@@ -46,6 +49,8 @@ fun MainScreen(onButtonClicked: () -> Unit = {}) { // ボタンクリック時�
             text = "ようこそ！",
             style = MaterialTheme.typography.headlineMedium // マテリアルテーマのスタイルを適用
         )
+        Spacer(modifier = Modifier.height(16.dp)) // テキストとボタンの間にスペースを追加
+        Text("Location Count : $count")
         Spacer(modifier = Modifier.height(16.dp)) // テキストとボタンの間にスペースを追加
         Button(onClick = onButtonClicked) {
             Text("ここをクリック")
