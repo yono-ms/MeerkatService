@@ -3,11 +3,15 @@ package com.example.meerkatservice.ui.screens
 import android.Manifest
 import android.content.Intent
 import android.os.Build
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
@@ -15,6 +19,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -31,6 +37,16 @@ import com.example.meerkatservice.database.MyDatabase
 import com.example.meerkatservice.extensions.openAppSettings
 import com.example.meerkatservice.extensions.toBestString
 import com.example.meerkatservice.ui.theme.MeerkatServiceTheme
+import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
+import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
+import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStart
+import com.patrykandpatrick.vico.compose.cartesian.layer.rememberColumnCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
+import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
+import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
+import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.core.cartesian.data.columnSeries
+import kotlinx.coroutines.runBlocking
 import java.util.Date
 
 @Composable
@@ -67,7 +83,7 @@ fun DistanceContent() {
     val serviceIntent = Intent(context, DistanceService::class.java)
     var isRunning by remember { mutableStateOf(DistanceService.isRunning) }
     val dao = MyDatabase.getDatabase(context).locationDao()
-    val locations by dao.getAllFlow().collectAsState(null)
+    val locations by dao.getLatestFlow(10).collectAsState(null)
     // 8a. Access the Info
     Column {
         Row(
@@ -85,6 +101,11 @@ fun DistanceContent() {
                     isRunning = false
                 }
             })
+        }
+        Spacer(Modifier.height(8.dp))
+        val list = locations?.map { it.distance }
+        list?.let {
+            DistanceBarChart(it)
         }
         Spacer(Modifier.height(8.dp))
         locations?.let { items ->
@@ -113,6 +134,34 @@ fun LocationEntityContent(entity: LocationEntity) {
         Text("Distance: ${"%.2f".format(entity.distance)}m")
         Text("Timestamp: ${Date(entity.time).toBestString()}")
     }
+}
+
+@Composable
+fun DistanceBarChart(distances: List<Float>, modifier: Modifier = Modifier) {
+    val modelProducer = remember { CartesianChartModelProducer() }
+    LaunchedEffect(distances) {
+        modelProducer.runTransaction {
+            columnSeries {
+                series(distances)
+            }
+        }
+    }
+    DistanceBarChartContent(modelProducer, modifier)
+}
+
+@Composable
+fun DistanceBarChartContent(
+    modelProducer: CartesianChartModelProducer,
+    modifier: Modifier = Modifier
+) {
+    CartesianChartHost(
+        rememberCartesianChart(
+            rememberColumnCartesianLayer(),
+            startAxis = VerticalAxis.rememberStart(),
+            bottomAxis = HorizontalAxis.rememberBottom()
+        ),
+        modelProducer
+    )
 }
 
 @Composable
@@ -163,6 +212,32 @@ fun DegradeContent() {
 fun DistanceContentPreview() {
     MeerkatServiceTheme {
         DistanceContent()
+    }
+}
+
+@Composable
+fun PreviewBox(content: @Composable BoxScope.() -> Unit) {
+    Box(modifier = Modifier
+        .background(Color.White)
+        .padding(16.dp), content = content)
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DistanceBarChartContentPreview() {
+    MeerkatServiceTheme {
+        val modelProducer = remember { CartesianChartModelProducer() }
+        runBlocking {
+            modelProducer.runTransaction {
+                columnSeries {
+                    series(5, 6, 5, 2, 11, 8, 5, 2, 15, 11, 8, 13, 12, 10, 2, 7)
+                }
+            }
+        }
+
+        PreviewBox {
+            DistanceBarChartContent(modelProducer)
+        }
     }
 }
 

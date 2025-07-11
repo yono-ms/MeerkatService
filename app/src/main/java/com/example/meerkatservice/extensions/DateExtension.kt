@@ -29,3 +29,16 @@ fun Date.toBestString(): String {
     }
     return ""
 }
+
+fun Date.toMinuteString(): String {
+    kotlin.runCatching {
+        val locale = Locale.getDefault()
+        val pattern = DateFormat.getBestDateTimePattern(locale, "mm")
+        SimpleDateFormat(pattern, locale).format(this@toMinuteString)
+    }.onSuccess {
+        return it
+    }.onFailure {
+        return it.message ?: ""
+    }
+    return ""
+}

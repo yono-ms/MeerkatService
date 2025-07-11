@@ -57,6 +57,8 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.room.runtime)
+    implementation(libs.vico.compose.m3)
+    implementation(libs.vico.compose)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
     testImplementation(libs.junit)

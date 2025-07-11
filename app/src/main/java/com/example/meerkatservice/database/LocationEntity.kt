@@ -108,9 +108,9 @@ data class LocationEntity(
             )
         }
 
-        fun fromLocations(locations: List<Location>): List<LocationEntity> {
+        fun fromLocations(locations: List<Location>, last: Location? = null): List<LocationEntity> {
             val list = mutableListOf<LocationEntity>()
-            var prev: Location? = null
+            var prev: Location? = last
             locations.forEach { location ->
                 val distance = prev?.let {
                     location.distanceTo(it)

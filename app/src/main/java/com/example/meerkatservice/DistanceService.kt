@@ -8,6 +8,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.location.Location
 import android.os.Binder
 import android.os.IBinder
 import android.os.Looper
@@ -54,6 +55,8 @@ class DistanceService : Service() {
 
     private val _locationError = MutableStateFlow<String?>(null)
     val locationError: StateFlow<String?> = _locationError
+
+    var lastLocation: Location? = null
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
@@ -130,16 +133,6 @@ class DistanceService : Service() {
 
     private fun distanceCollect() {
         startLocationUpdates()
-//        runCatching {
-//            serviceScope.launch {
-//                while (true) {
-//                    logger.debug("Distance Collector is alive.")
-//                    delay(3_000)
-//                }
-//            }
-//        }.onFailure {
-//            logger.error("distanceCollect", it)
-//        }
     }
 
     @SuppressLint("MissingPermission") // パーミッションチェックは呼び出し元で行う
@@ -157,7 +150,9 @@ class DistanceService : Service() {
                 logger.trace("onLocationResult {}", locationResult)
                 serviceScope.launch {
                     runCatching {
-                        val entities = LocationEntity.fromLocations(locationResult.locations)
+                        val entities =
+                            LocationEntity.fromLocations(locationResult.locations, lastLocation)
+                        lastLocation = locationResult.locations.lastOrNull()
                         dao.insert(entities)
                     }.onFailure {
                         logger.error("onLocationResult", it)
